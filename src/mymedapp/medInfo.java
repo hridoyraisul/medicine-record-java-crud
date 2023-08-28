@@ -5,7 +5,9 @@
 package mymedapp;
 
 import java.sql.*;
+import java.util.Vector;
 import javax.swing.JOptionPane;
+import javax.swing.table.DefaultTableModel;
 //import javax.swing.table.DefaultTableModel;
 
 /**
@@ -24,6 +26,11 @@ public class medInfo extends javax.swing.JFrame {
      */
     public medInfo() {
         initComponents();
+         try (Connection connection = DriverManager.getConnection(JDBC_URL, USERNAME, PASSWORD)) {
+            loadTable(connection);
+         } catch (SQLException e) {
+              System.out.println( e.getMessage());
+         }
     }
 
     /**
@@ -183,7 +190,6 @@ public class medInfo extends javax.swing.JFrame {
 
         jTable1.setAutoCreateRowSorter(true);
         jTable1.setBackground(new java.awt.Color(20, 200, 200));
-        jTable1.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(0, 0, 255), 5, true));
         jTable1.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
 
@@ -200,7 +206,7 @@ public class medInfo extends javax.swing.JFrame {
                 return types [columnIndex];
             }
         });
-        jTable1.setCellSelectionEnabled(true);
+        jTable1.setColumnSelectionAllowed(false);
         jScrollPane2.setViewportView(jTable1);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
@@ -272,6 +278,19 @@ public class medInfo extends javax.swing.JFrame {
         }
     }
     
+    private static void viewRecord(Connection connection, int id, String name, String description, String time, String type) throws SQLException {
+        String sql = "SELECT * FROM medicine WHERE id = ?";
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, name);
+            statement.setString(2, description);
+            statement.setString(3, time);
+            statement.setString(4, type);
+            statement.setInt(5, id);
+            statement.executeUpdate();
+            System.out.println("Medicine record updated for " + name);
+        }
+    }
+    
     private void clearForm() {
         nameValue.setText("");
         descriptionValue.setText("");
@@ -281,39 +300,33 @@ public class medInfo extends javax.swing.JFrame {
     }
     
     
-    private static void loadTable(Connection connection){
-        String sql = "SELECT * FROM medicine";
-        try (Statement statement = connection.createStatement();
-            ResultSet resultSet = statement.executeQuery(sql)) {
+   
+    
+    
+    private void loadTable(Connection connection){
+        int cnt;
+        try{
+            PreparedStatement pat = connection.prepareStatement("SELECT * FROM medicine");
+            ResultSet Res = pat.executeQuery();
+            ResultSetMetaData RSMD = Res.getMetaData();
+            cnt = RSMD.getColumnCount();
+            DefaultTableModel dtm = (DefaultTableModel) jTable1.getModel();
+            dtm.setRowCount(0);
             
-//            DefaultTavleModel defaultTableModel = (DefaultTableModel)jTable1.getModel();
-//            defaultTableModel.setRowCount(0);
-//            
-//             while (resultSet.next()) {
-//                Object[] row = {
-//                    resultSet.getString("name"),
-//                    resultSet.getString("description"),
-//                    resultSet.getString("time"),
-//                    resultSet.getString("type")
-//                    // Add more columns as needed
-//                };
-//                defaultTableModel.addRow(row);
-//            }
- 
-            //loop start
-            System.out.println("---- medicine ----");
-            while (resultSet.next()) {
-                int id = resultSet.getInt("id");
-                String name = resultSet.getString("name");
-                String description = resultSet.getString("description");
-                System.out.println("ID: " + id + ", Name: " + name + ", Description: " + description);
+            while(Res.next()){
+                Vector v2 = new Vector();
+                for(int i = 1; i <= cnt; i++){
+                    //v2.add(Res.getString("id"));
+                    v2.add(Res.getString("name"));
+                    v2.add(Res.getString("description"));
+                    v2.add(Res.getString("time"));
+                    v2.add(Res.getString("type"));
+                }
+                dtm.addRow(v2);
             }
-            System.out.println("------------------");
-            //loop end
-        
-        } catch (SQLException e) {
+         } catch (SQLException e) {
              System.out.println( e.getMessage());
-        }
+         }
         
     }
     
@@ -345,7 +358,7 @@ public class medInfo extends javax.swing.JFrame {
             createNewRecord(connection,name,description,time,type);
             JOptionPane.showMessageDialog(this,"Medicine Record Added Successfully!");
             clearForm();
-            fetchTableData(connection);
+            loadTable(connection);
         } catch (SQLException e) {
              System.out.println( e.getMessage());
         }
@@ -363,7 +376,7 @@ public class medInfo extends javax.swing.JFrame {
             updateRecord(connection,id,name,description,time,type);
             JOptionPane.showMessageDialog(this,"Medicine Record Updated Successfully!");
             clearForm();
-            fetchTableData(connection);
+            loadTable(connection);
         } catch (SQLException e) {
              System.out.println( e.getMessage());
         }
@@ -376,7 +389,7 @@ public class medInfo extends javax.swing.JFrame {
             deleteRecord(connection,id);
             JOptionPane.showMessageDialog(this,"Medicine Record Deleted Successfully!");
             clearForm();
-            fetchTableData(connection);
+            loadTable(connection);
         } catch (SQLException e) {
              System.out.println( e.getMessage());
         }
@@ -421,11 +434,12 @@ public class medInfo extends javax.swing.JFrame {
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
                 new medInfo().setVisible(true);
-                try (Connection connection = DriverManager.getConnection(JDBC_URL, USERNAME, PASSWORD)) {
-                    fetchTableData(connection);
-                 } catch (SQLException e) {
-                      System.out.println( e.getMessage());
-                 }
+         
+//                try (Connection connection = DriverManager.getConnection(JDBC_URL, USERNAME, PASSWORD)) {
+//                    loadTable(connection);
+//                 } catch (SQLException e) {
+//                      System.out.println( e.getMessage());
+//                 }
             }
         });
     }
