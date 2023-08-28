@@ -195,18 +195,16 @@ public class medInfo extends javax.swing.JFrame {
 
             },
             new String [] {
-                "Name", "Description", "Time", "Type"
+                "Name", "Description", "Taking Time", "Medicine Type"
             }
-        ) {
-            Class[] types = new Class [] {
-                java.lang.String.class, java.lang.String.class, java.lang.String.class, java.lang.String.class
-            };
-
-            public Class getColumnClass(int columnIndex) {
-                return types [columnIndex];
+        ));
+        jTable1.setColumnSelectionAllowed(false);
+        jTable1.setFocusable(false);
+        jTable1.addPropertyChangeListener(new java.beans.PropertyChangeListener() {
+            public void propertyChange(java.beans.PropertyChangeEvent evt) {
+                jTable1PropertyChange(evt);
             }
         });
-        jTable1.setColumnSelectionAllowed(false);
         jScrollPane2.setViewportView(jTable1);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
@@ -216,13 +214,11 @@ public class medInfo extends javax.swing.JFrame {
             .addGroup(layout.createSequentialGroup()
                 .addGap(24, 24, 24)
                 .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 12, Short.MAX_VALUE)
-                .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap())
+                .addGap(18, 18, 18)
+                .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 545, javax.swing.GroupLayout.PREFERRED_SIZE))
             .addGroup(layout.createSequentialGroup()
                 .addGap(383, 383, 383)
-                .addComponent(jLabel1)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addComponent(jLabel1))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -241,7 +237,7 @@ public class medInfo extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void typeValueActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_typeValueActionPerformed
-        // TODO add your handling code here:
+        System.out.println("changed value" );
     }//GEN-LAST:event_typeValueActionPerformed
 
     private static void createNewRecord(Connection connection, String name, String description, String time, String type) throws SQLException {    
@@ -299,23 +295,22 @@ public class medInfo extends javax.swing.JFrame {
         nameValue.requestFocus();
     }
     
-    
    
     
     
     private void loadTable(Connection connection){
-        int cnt;
+        int count;
         try{
             PreparedStatement pat = connection.prepareStatement("SELECT * FROM medicine");
             ResultSet Res = pat.executeQuery();
             ResultSetMetaData RSMD = Res.getMetaData();
-            cnt = RSMD.getColumnCount();
+            count = RSMD.getColumnCount();
             DefaultTableModel dtm = (DefaultTableModel) jTable1.getModel();
             dtm.setRowCount(0);
             
             while(Res.next()){
                 Vector v2 = new Vector();
-                for(int i = 1; i <= cnt; i++){
+                for(int i = 1; i <= count; i++){
                     //v2.add(Res.getString("id"));
                     v2.add(Res.getString("name"));
                     v2.add(Res.getString("description"));
@@ -354,14 +349,18 @@ public class medInfo extends javax.swing.JFrame {
         String time = timeValue.getText();
         String type = typeValue.getSelectedItem().toString();
         
-        try (Connection connection = DriverManager.getConnection(JDBC_URL, USERNAME, PASSWORD)) {
-            createNewRecord(connection,name,description,time,type);
-            JOptionPane.showMessageDialog(this,"Medicine Record Added Successfully!");
-            clearForm();
-            loadTable(connection);
-        } catch (SQLException e) {
-             System.out.println( e.getMessage());
-        }
+        if(name.length() == 0 || description.length() == 0 || time.length() == 0){
+            JOptionPane.showMessageDialog(this,"Please fill up all input field");
+        } else{
+            try (Connection connection = DriverManager.getConnection(JDBC_URL, USERNAME, PASSWORD)) {
+                createNewRecord(connection,name,description,time,type);
+                JOptionPane.showMessageDialog(this,"Medicine Record Added Successfully!");
+                clearForm();
+                loadTable(connection);
+            } catch (SQLException e) {
+                 System.out.println( e.getMessage());
+            }
+        }   
     }//GEN-LAST:event_jButton1ActionPerformed
 
     // Update existing record
@@ -402,6 +401,18 @@ public class medInfo extends javax.swing.JFrame {
     private void timeValueActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_timeValueActionPerformed
         // TODO add your handling code here:
     }//GEN-LAST:event_timeValueActionPerformed
+
+    private void jTable1PropertyChange(java.beans.PropertyChangeEvent evt) {//GEN-FIRST:event_jTable1PropertyChange
+        Object obj = evt.getSource();
+        System.out.println( obj.equals(evt.getPropertyName()));
+        try (Connection connection = DriverManager.getConnection(JDBC_URL, USERNAME, PASSWORD)) {
+            //updateRecord(connection,id,name,description,time,type);
+            //JOptionPane.showMessageDialog(this,"Medicine Record Updated Successfully!");
+            //loadTable(connection);
+        } catch (SQLException e) {
+             System.out.println( e.getMessage());
+        }
+    }//GEN-LAST:event_jTable1PropertyChange
 
     /**
      * @param args the command line arguments
